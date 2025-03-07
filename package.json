@@ -22,6 +22,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
+    "react-responsive-carousel": "^3.2.23",
     "stripe": "^17.7.0",
     "tailwindcss": "^4.0.9"
   },
