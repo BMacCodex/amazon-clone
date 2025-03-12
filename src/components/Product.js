@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { StarIcon } from "@heroicons/react/24/solid";
+import { useDispatch } from "react-redux";
+import { addToBasket } from "../slices/basketSlice";
 
 const MIN_RATING = 1;
 const MAX_RATING = 5;
 
 function Product({ id, title, price, description, category, image }) {
+  const dispatch = useDispatch();
   const [rating, setRating] = useState(0);
   const [hasPrime, setHasPrime] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // Track if component is mounted
@@ -22,6 +25,22 @@ function Product({ id, title, price, description, category, image }) {
     style: "currency",
     currency: "USD",
   }).format(price);
+
+  const addItemToBasket = () => {
+    const product = {
+      id,
+      title,
+      price,
+      description,
+      category,
+      image,
+      rating,
+      hasPrime,
+    };
+
+    // Sending the product as an action to the REDUX store (the basket slice)
+    dispatch(addToBasket(product));
+  };
 
   return (
     <div className="relative flex flex-col m-5 bg-white z-30 p-10">
@@ -66,7 +85,9 @@ function Product({ id, title, price, description, category, image }) {
           <p className="text-xs text-gray-500">FREE Next-day Delivery</p>
         </div>
       )}
-      <button className="mt-auto button">Add to Basket</button>
+      <button onClick={addItemToBasket} className="mt-auto button">
+        Add to Basket
+      </button>
     </div>
   );
 }
