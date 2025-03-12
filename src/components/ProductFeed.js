@@ -1,5 +1,6 @@
 import React from "react";
 import Product from "./Product";
+import Image from "next/image";
 
 function ProductFeed({ products }) {
   return (
