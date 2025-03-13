@@ -21,16 +21,13 @@ function Product({ id, title, price, description, category, image }) {
     setIsMounted(true); // Mark component as mounted
   }, []);
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(price);
+  const formattedPrice = `${price.toFixed(2)}`;
 
   const addItemToBasket = () => {
     const product = {
       id,
       title,
-      price,
+      price: parseFloat(price.toFixed(2)), // Round price to 2 decimal places
       description,
       category,
       image,

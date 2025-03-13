@@ -51,7 +51,7 @@ function CheckoutProduct({
             ))}
         </div>
         <p className="text-xs my-2 line-clamp-3">{description}</p>
-        <p>${price}</p>
+        <p>${price.toFixed(2)}</p>
 
         {hasPrime && (
           <div className="flex items-center space-x-2">
