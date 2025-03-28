@@ -33,7 +33,6 @@ export async function getStaticProps() {
   return {
     props: {
       products,
-      session,
     },
   };
 }
