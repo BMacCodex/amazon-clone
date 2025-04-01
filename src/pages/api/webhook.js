@@ -1,21 +1,27 @@
 import { buffer } from "micro";
 import * as admin from "firebase-admin";
 
-// Secure a connection to FIREBASE from the backend
-const serviceAccount = require("../../../permissions.json");
+// Initialize Firebase with environment variables
 const app = !admin.apps.length
   ? admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      }),
     })
   : admin.app();
 
-// Establish a connection to Stripe
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_SIGNING_SECRET) {
+  throw new Error("Missing Stripe environment variables");
+}
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_SIGNING_SECRET;
 
+// Fulfill Order
 const fulfillOrder = async (session) => {
-  // console.log("Fulfilling order", session);
   return app
     .firestore()
     .collection("users")
@@ -33,6 +39,7 @@ const fulfillOrder = async (session) => {
     });
 };
 
+// Webhook handler
 export default async (req, res) => {
   if (req.method === "POST") {
     const requestBuffer = await buffer(req);
@@ -41,23 +48,23 @@ export default async (req, res) => {
 
     let event;
 
-    // Verify that the EVENT posted came from stripe
     try {
       event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
     } catch (err) {
       console.error("ERROR", err.message);
-      res.status(400).send(`Webhook Error: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle the checkout.session.completed event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-
-      // Fulfill the purchase
       return fulfillOrder(session)
-        .then(() => res.status(200))
+        .then(() => res.status(200).send("Success"))
         .catch((err) => res.status(400).send(`Webhook Error: ${err.message}`));
     }
+
+    res.status(200).end();
+  } else {
+    res.status(405).end("Method Not Allowed");
   }
 };
 
