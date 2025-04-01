@@ -6,9 +6,11 @@ import { db } from "../../firebase"; // Ensure correct import path
 import { collection, doc, getDocs, orderBy, query } from "firebase/firestore";
 import Order from "../components/Order";
 
-function Orders({ orders }) {
+function Orders({ orders = [] }) {
+  // Default empty array
   const { data: session } = useSession();
   console.log(orders);
+
   return (
     <div>
       <Header />
@@ -18,7 +20,7 @@ function Orders({ orders }) {
         </h1>
 
         {session ? (
-          <h2>{orders.length} Orders</h2>
+          <h2>{orders?.length || 0} Orders</h2> // Safe check
         ) : (
           <h2>Please sign in to see your orders</h2>
         )}
@@ -43,24 +45,20 @@ function Orders({ orders }) {
   );
 }
 
-export default Orders;
-
 export async function getServerSideProps(context) {
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
   const session = await getSession(context);
 
   if (!session) {
     return {
-      props: {},
+      props: { orders: [] }, // Ensure orders is always an array
     };
   }
 
-  // Query Firestore
   const ordersRef = collection(db, "users", session.user.email, "orders");
   const ordersQuery = query(ordersRef, orderBy("timestamp", "desc"));
   const stripeOrdersSnapshot = await getDocs(ordersQuery);
 
-  // Retrieve Stripe orders
   const orders = await Promise.all(
     stripeOrdersSnapshot.docs.map(async (order) => ({
       id: order.id,
@@ -78,7 +76,9 @@ export async function getServerSideProps(context) {
 
   return {
     props: {
-      orders,
+      orders: orders || [], // Ensure orders is always an array
     },
   };
 }
+
+export default Orders;
